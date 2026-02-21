@@ -1,0 +1,8 @@
+version: "v1"
+
+http:
+  listener:
+    basePath: "/a-country-weather-pa/api/${version}"
+  requester:
+    basePath: "/a-country-weather-sa/api/${version}"
+    connectionTimeout: "120000" # 2 minutes  
