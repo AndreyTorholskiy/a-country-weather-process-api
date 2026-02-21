@@ -2,7 +2,43 @@
 title: a-country-weather-process-api
 version: v1
 mediaType: application/json        
-          
+
+types:
+  CountryWeather: !include datatypes/CountryWeather.raml
+  Error: !include datatypes/Error.raml
+  
+traits:    
+  ErrorResponse:
+    responses:
+      400:
+        body:
+          type: Error
+          example: !include examples/errors/400.json
+      404:
+        body:
+          type: Error
+          example: !include examples/errors/404.json
+      405:
+        body:
+          type: Error
+          example: !include examples/errors/405.json
+      406:
+        body:
+          type: Error
+          example: !include examples/errors/406.json            
+      415:
+        body:
+          type: Error
+          example: !include examples/errors/415.json
+      500:
+        body:
+          type: Error
+          example: !include examples/errors/500.json
+      501:
+        body:
+          type: Error
+          example: !include examples/errors/501.json    
+                                                                  
 /country-weather:
   get:
     description: Get information about countries
