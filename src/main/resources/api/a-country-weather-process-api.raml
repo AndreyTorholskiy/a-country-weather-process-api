@@ -1,0 +1,15 @@
+#%RAML 1.0
+title: a-country-weather-process-api
+version: v1
+mediaType: application/json        
+          
+/country-weather:
+  get:
+    description: Get information about countries
+    is: [ErrorResponse]
+    responses:
+      200:
+        body:
+          application/json:
+            type: CountryWeather
+            example: !include examples/country-weather-example.json
