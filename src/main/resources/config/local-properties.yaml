@@ -4,5 +4,9 @@ http:
   listener:
     basePath: "/a-country-weather-pa/api/${version}"
   requester:
-    basePath: "/a-country-weather-sa/api/${version}"
-    connectionTimeout: "120000" # 2 minutes  
+    countryWeatherAPI:
+      basePath: "/a-country-weather-sa/api/v1"
+      connectionTimeout: "120000" # 2 minutes
+    mongodbAPI:
+      basePath: "/a-mongodb-sa/api/v1"
+      connectionTimeout: "120000" # 2 minutes 

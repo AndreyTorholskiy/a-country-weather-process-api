@@ -1,26 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:amqp="http://www.mulesoft.org/schema/mule/amqp"
-	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns="http://www.mulesoft.org/schema/mule/core"
-	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+<mule xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo"
+	xmlns:amqp="http://www.mulesoft.org/schema/mule/amqp" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
-http://www.mulesoft.org/schema/mule/amqp http://www.mulesoft.org/schema/mule/amqp/current/mule-amqp.xsd">
-	<sub-flow name="publishCountrySingleQueue" doc:id="dff313e0-5293-49d6-944b-d0d763487835">
-		<http:request doc:name="GET Countries" doc:id="2f0987c5-abf4-42ad-95f0-eec145c77555" config-ref="HTTP_Domain_Request_config" path="${http.requester.basePath}/countries" />
-		<ee:transform doc:name="Random 3 Europe Country" doc:id="03663e66-59a7-4456-a1e1-34bf283e35ea">
-			<ee:message>
-				<ee:set-payload><![CDATA[%dw 2.0
+http://www.mulesoft.org/schema/mule/amqp http://www.mulesoft.org/schema/mule/amqp/current/mule-amqp.xsd
+http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd">
+	<flow name="publishCountrySingleQueue" doc:id="b14e64d6-0c99-4b75-8ccc-c32cbe8386e2" >
+		<scheduler doc:name="Scheduler" doc:id="9df31bf0-d6c9-4718-96a1-c04a403513b1" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="10" timeUnit="MINUTES"/>
+			</scheduling-strategy>
+		</scheduler>
+		<http:request doc:name="GET Country" doc:id="6bdda1a3-db72-4d36-a879-03577f7c36cb" config-ref="HTTP_Domain_Request_config" path="${http.requester.countryWeatherAPI.basePath}/country" />
+		<ee:transform doc:name="Random 3 Europe Country" doc:id="843aa210-ed35-4f6a-866d-5c7d98df80ad" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
 ---
 (payload orderBy ((item, index) -> random()))[0 to 2]]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<foreach doc:name="For Each" doc:id="8c5ad987-4043-4da8-a20d-1961ab2572a9">
-			<ee:transform doc:name="Prapare Country Data" doc:id="aab541b1-b4e8-4c58-94e5-fdabfdabec65">
-				<ee:message>
-					<ee:set-payload><![CDATA[%dw 2.0
+		<foreach doc:name="For Each" doc:id="4d64ecf5-8f66-4fd5-91e3-9cfa264ed665" >
+			<ee:transform doc:name="Prapare Country Data" doc:id="03e08dd4-586f-44e5-84c5-b7ca06ef09a3" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
 ---
 {
@@ -37,20 +43,77 @@ output application/json
 }]]></ee:set-payload>
 				</ee:message>
 			</ee:transform>
-			<amqp:publish doc:name="Publish for 25 Minutes" doc:id="50f2f7a5-d452-42c6-861f-6ec42a635f3b" config-ref="Local_RabbitMQ_AMQP_Config" exchangeName="country.exchange" deliveryMode="PERSISTENT" createFallbackExchange="true">
+			<amqp:publish doc:name="Publish for 9 Minutes" doc:id="e4d9ffbc-32bc-4e82-afcd-48007f432371" config-ref="Local_RabbitMQ_AMQP_Config" exchangeName="country.exchange" deliveryMode="PERSISTENT" createFallbackExchange="true" >
 				<amqp:fallback-exchange-definition removalStrategy="UNUSED" type="TOPIC" />
-				<amqp:routing-keys>
+				<amqp:routing-keys >
 					<amqp:routing-key value="country.weather.updated" />
 				</amqp:routing-keys>
-				<amqp:message>
-					<amqp:properties contentType="application/json" expiration="25" expirationTimeUnit="MINUTES" />
+				<amqp:message >
+					<amqp:properties contentType="application/json" expiration="9" expirationTimeUnit="MINUTES" />
 				</amqp:message>
 			</amqp:publish>
 		</foreach>
-	</sub-flow>
+	</flow>
+	<flow name="saveMessageToDB" doc:id="1c7af8ee-4e59-4428-9dcd-b27c42041ab5" >
+		<amqp:listener doc:name="Listener Country Weather Queue" doc:id="00452b48-0178-4576-bde3-95414b5f3e8b" config-ref="Local_RabbitMQ_AMQP_Config" queueName="country.weather.queue" ackMode="MANUAL"/>
+<set-variable value="#[attributes.ackId]" doc:name="ackId" doc:id="8583645e-bc0d-462e-88fe-b3633226e26e" variableName="ackId"/>
+		<set-variable value="#[payload.capital.city]" doc:name="city" doc:id="2804e972-1c25-4079-9da0-509c72ca27e1" variableName="city"/>
+		<http:request doc:name="GET Weather" doc:id="921e82ef-99cb-4bdb-937c-70fa2eae371b" path="${http.requester.countryWeatherAPI.basePath}/weather" target="weatherData" config-ref="HTTP_Domain_Request_config">
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"city" : vars.city
+}]]]></http:query-params>
+		</http:request>
+		<ee:transform doc:name="Prepare for DB" doc:id="b6259c39-7b3e-44eb-a246-b9b95c37bfef">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var countryData = payload
+var weatherData = vars.weatherData
+---
+{
+    country: countryData.country,
+	region: countryData.region,
+	subregion: countryData.subregion,
+	currencies: countryData.currencies,
+	languages: countryData.languages,
+	countryCode: countryData.countryCode,
+	timezone: weatherData.timezone,
+	population: countryData.population,
+	capital: {
+		city: vars.city,
+		longitude: weatherData.coord.lon,
+		latitude: weatherData.coord.lat,
+		seaLevel: weatherData.main.sea_level,
+		weatherConditions: {
+			visibility: weatherData.visibility,
+			temperature: {
+				degrees: "Celsius",
+				current: weatherData.main.temp,
+				max: weatherData.main.temp_max,
+				min: weatherData.main.temp_min
+			}
+		},
+		sunrise: weatherData.sys.sunrise,
+		sunset: weatherData.sys.sunset,
+		weatherOn: now()
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request doc:name="POST Save to DB" doc:id="69cfeb0c-08db-4619-bd53-f9bd5fd296ec" method="POST" config-ref="HTTP_Domain_Request_config" path="${http.requester.mongodbAPI.basePath}/country-weather">
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"city" : vars.city
+}]]]></http:query-params>
+		</http:request>
+		<amqp:ack doc:name="Ack" doc:id="b6520a79-1718-4739-8996-dc8448cca485" ackId="#[vars.ackId]"/>
+	</flow>
 	<sub-flow name="getCountryWeatherFromDB" doc:id="862b32ff-9330-4c8d-9b6f-07f80888d2f0" >
 		<set-variable value='#[attributes.queryParams.country default ""]' doc:name="queryParam" doc:id="7b976295-1134-4bea-ba83-cc2856d12ccc" variableName="queryParam" />
-		<http:request doc:name="GET Country Weather" doc:id="f9fcb6c8-669e-4835-bb69-deb2ab6f4cac" config-ref="HTTP_Domain_Request_config" path="/a-messaging-sa/api/v1/country-weather" responseTimeout="30000" >
+		<http:request doc:name="GET CountryWeather from DB" doc:id="f9fcb6c8-669e-4835-bb69-deb2ab6f4cac" config-ref="HTTP_Domain_Request_config" path="${http.requester.mongodbAPI.basePath}/country-weather" responseTimeout="30000" >
 			<http:query-params ><![CDATA[#[output application/java
 ---
 {
@@ -59,11 +122,11 @@ output application/json
 		</http:request>
 	</sub-flow>
 	<sub-flow name="publishCountryWeatherSingleQueue" doc:id="836bce5d-0340-4696-b548-f923cc9f5a4c" >
-		<http:request doc:name="get Countries" doc:id="db36f8dd-6311-41bc-b6a7-911426055b57" config-ref="HTTP_Domain_Request_config" path="${http.requester.basePath}/countries"/>
+		<http:request doc:name="get Countries" doc:id="db36f8dd-6311-41bc-b6a7-911426055b57" config-ref="HTTP_Domain_Request_config" path="${http.requester.countryWeatherAPI.basePath}/country"/>
 		<parallel-foreach doc:name="Parallel For Each" doc:id="d81810b6-b6c2-42af-848e-498c29a952f2" collection="#[payload]">
 			<set-variable value="#[payload]" doc:name="countryData" doc:id="5f18548a-0538-4e53-9478-08871cd6bfd1" variableName="countryData"/>
 			<set-variable value="#[payload.capital[0]]" doc:name="city" doc:id="4e0d8a61-4de9-4873-bb47-1d33c9d60104" variableName="city"/>
-			<http:request doc:name="get Weather" doc:id="0e9cd925-d801-4cff-9662-1edfc3f0d7ef" path="${http.requester.basePath}/weather" config-ref="HTTP_Domain_Request_config">
+			<http:request doc:name="get Weather" doc:id="0e9cd925-d801-4cff-9662-1edfc3f0d7ef" path="${http.requester.countryWeatherAPI.basePath}/weather" config-ref="HTTP_Domain_Request_config">
 				<http:query-params ><![CDATA[#[output application/java
 ---
 {
@@ -115,12 +178,12 @@ var weatherData = payload
 		</parallel-foreach>
 	</sub-flow>
 	<sub-flow name="publishCountryWeatherTwoQueues" doc:id="fec88438-e2f0-44b8-af68-95a5085105d8" >
-		<http:request doc:name="get Countries" doc:id="c799629b-8baf-4d70-ad0d-8874842d18d4" config-ref="HTTP_Domain_Request_config" path="${http.requester.basePath}/countries" />
+		<http:request doc:name="get Countries" doc:id="c799629b-8baf-4d70-ad0d-8874842d18d4" config-ref="HTTP_Domain_Request_config" path="${http.requester.countryWeatherAPI.basePath}/country" />
 		<parallel-foreach doc:name="Parallel For Each" doc:id="afcc7d8e-db7e-4191-8a81-c54eec700ee7" collection="#[payload]" >
 			<set-variable value="#[lower(payload.cca2)]" doc:name="countryCode" doc:id="590619fd-a4cc-461e-ba8f-fed892c575e0" variableName="countryCode"/>
 			<set-variable value="#[payload]" doc:name="countryData" doc:id="9fbf6148-184a-440b-bbad-e1ec5b529430" variableName="countryData" />
 			<set-variable value="#[payload.capital[0]]" doc:name="city" doc:id="98506acb-e818-4976-9d7d-7ad50941243a" variableName="city" />
-			<http:request doc:name="get Weather" doc:id="0c2fd470-6819-47b5-a98c-771545af5cd2" config-ref="HTTP_Domain_Request_config" path="${http.requester.basePath}/weather" >
+			<http:request doc:name="get Weather" doc:id="0c2fd470-6819-47b5-a98c-771545af5cd2" config-ref="HTTP_Domain_Request_config" path="${http.requester.countryWeatherAPI.basePath}/weather" >
 				<http:query-params ><![CDATA[#[output application/java
 ---
 {
