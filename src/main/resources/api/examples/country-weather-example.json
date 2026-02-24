@@ -16,7 +16,7 @@
 	"timezone": 7200,
 	"capital": {
 		"city": "Kyiv",
-		"longtitude": 30.5167,
+		"longitude": 30.5167,
 		"latitude": 50.4333,
 		"seaLevel": 1003,
 		"weatherConditions": {

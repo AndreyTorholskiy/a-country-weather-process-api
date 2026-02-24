@@ -103,11 +103,6 @@ var weatherData = vars.weatherData
 			</ee:message>
 		</ee:transform>
 		<http:request doc:name="POST Save to DB" doc:id="69cfeb0c-08db-4619-bd53-f9bd5fd296ec" method="POST" config-ref="HTTP_Domain_Request_config" path="${http.requester.mongodbAPI.basePath}/country-weather">
-			<http:query-params ><![CDATA[#[output application/java
----
-{
-	"city" : vars.city
-}]]]></http:query-params>
 		</http:request>
 		<amqp:ack doc:name="Ack" doc:id="b6520a79-1718-4739-8996-dc8448cca485" ackId="#[vars.ackId]"/>
 	</flow>
@@ -121,17 +116,17 @@ var weatherData = vars.weatherData
 }]]]></http:query-params>
 		</http:request>
 	</sub-flow>
-	<sub-flow name="publishCountryWeatherSingleQueue" doc:id="836bce5d-0340-4696-b548-f923cc9f5a4c" >
+	<!-- [STUDIO:"publishCountryWeatherSingleQueue"]<sub-flow name="publishCountryWeatherSingleQueue" doc:id="836bce5d-0340-4696-b548-f923cc9f5a4c" >
 		<http:request doc:name="get Countries" doc:id="db36f8dd-6311-41bc-b6a7-911426055b57" config-ref="HTTP_Domain_Request_config" path="${http.requester.countryWeatherAPI.basePath}/country"/>
-		<parallel-foreach doc:name="Parallel For Each" doc:id="d81810b6-b6c2-42af-848e-498c29a952f2" collection="#[payload]">
-			<set-variable value="#[payload]" doc:name="countryData" doc:id="5f18548a-0538-4e53-9478-08871cd6bfd1" variableName="countryData"/>
-			<set-variable value="#[payload.capital[0]]" doc:name="city" doc:id="4e0d8a61-4de9-4873-bb47-1d33c9d60104" variableName="city"/>
+		<parallel-foreach doc:name="Parallel For Each" doc:id="d81810b6-b6c2-42af-848e-498c29a952f2" collection="#[payload&#93;">
+			<set-variable value="#[payload&#93;" doc:name="countryData" doc:id="5f18548a-0538-4e53-9478-08871cd6bfd1" variableName="countryData"/>
+			<set-variable value="#[payload.capital[0&#93;&#93;" doc:name="city" doc:id="4e0d8a61-4de9-4873-bb47-1d33c9d60104" variableName="city"/>
 			<http:request doc:name="get Weather" doc:id="0e9cd925-d801-4cff-9662-1edfc3f0d7ef" path="${http.requester.countryWeatherAPI.basePath}/weather" config-ref="HTTP_Domain_Request_config">
 				<http:query-params ><![CDATA[#[output application/java
----
+&#45;&#45;-
 {
 	"city" : vars.city
-}]]]></http:query-params>
+}&#93;&#93;&#93;></http:query-params>
 			</http:request>
 			<ee:transform doc:name="MAP Country and Weather">
             <ee:message>
@@ -139,7 +134,7 @@ var weatherData = vars.weatherData
 output application/json
 var countryData = vars.countryData
 var weatherData = payload
----
+&#45;&#45;-
 {
     country: countryData.name.common,
 	region: countryData.region,
@@ -149,7 +144,7 @@ var weatherData = payload
 	countryCode: countryData.cca2,
 	population: countryData.population,
 	capital: {
-		city: countryData.capital[0],
+		city: countryData.capital[0&#93;,
 		longitude: weatherData.coord.lon,
 		latitude: weatherData.coord.lat,
 		weatherConditions: {
@@ -163,7 +158,7 @@ var weatherData = payload
 		sunrise: weatherData.sys.sunrise,
 		sunset: weatherData.sys.sunset
 	}
-}]]></ee:set-payload>
+}&#93;&#93;></ee:set-payload>
             </ee:message>
         </ee:transform>
 			<amqp:publish doc:name="Publish for 2 Minutes" doc:id="7d4a0587-bcff-41f5-8faa-248f134b816f" config-ref="Local_RabbitMQ_AMQP_Config" exchangeName="country.exchange" deliveryMode="PERSISTENT" createFallbackExchange="true">
@@ -176,19 +171,19 @@ var weatherData = payload
 				</amqp:message>
 			</amqp:publish>
 		</parallel-foreach>
-	</sub-flow>
-	<sub-flow name="publishCountryWeatherTwoQueues" doc:id="fec88438-e2f0-44b8-af68-95a5085105d8" >
+	</sub-flow> [STUDIO] -->
+	<!-- [STUDIO:"publishCountryWeatherTwoQueues"]<sub-flow name="publishCountryWeatherTwoQueues" doc:id="fec88438-e2f0-44b8-af68-95a5085105d8" >
 		<http:request doc:name="get Countries" doc:id="c799629b-8baf-4d70-ad0d-8874842d18d4" config-ref="HTTP_Domain_Request_config" path="${http.requester.countryWeatherAPI.basePath}/country" />
-		<parallel-foreach doc:name="Parallel For Each" doc:id="afcc7d8e-db7e-4191-8a81-c54eec700ee7" collection="#[payload]" >
-			<set-variable value="#[lower(payload.cca2)]" doc:name="countryCode" doc:id="590619fd-a4cc-461e-ba8f-fed892c575e0" variableName="countryCode"/>
-			<set-variable value="#[payload]" doc:name="countryData" doc:id="9fbf6148-184a-440b-bbad-e1ec5b529430" variableName="countryData" />
-			<set-variable value="#[payload.capital[0]]" doc:name="city" doc:id="98506acb-e818-4976-9d7d-7ad50941243a" variableName="city" />
+		<parallel-foreach doc:name="Parallel For Each" doc:id="afcc7d8e-db7e-4191-8a81-c54eec700ee7" collection="#[payload&#93;" >
+			<set-variable value="#[lower(payload.cca2)&#93;" doc:name="countryCode" doc:id="590619fd-a4cc-461e-ba8f-fed892c575e0" variableName="countryCode"/>
+			<set-variable value="#[payload&#93;" doc:name="countryData" doc:id="9fbf6148-184a-440b-bbad-e1ec5b529430" variableName="countryData" />
+			<set-variable value="#[payload.capital[0&#93;&#93;" doc:name="city" doc:id="98506acb-e818-4976-9d7d-7ad50941243a" variableName="city" />
 			<http:request doc:name="get Weather" doc:id="0c2fd470-6819-47b5-a98c-771545af5cd2" config-ref="HTTP_Domain_Request_config" path="${http.requester.countryWeatherAPI.basePath}/weather" >
 				<http:query-params ><![CDATA[#[output application/java
----
+&#45;&#45;-
 {
 	"city" : vars.city
-}]]]></http:query-params>
+}&#93;&#93;&#93;></http:query-params>
 			</http:request>
 			<ee:transform doc:name="MAP Country and Weather" doc:id="546e7a7d-1729-4af6-8a92-7ee1b662d07b" >
 				<ee:message >
@@ -196,7 +191,7 @@ var weatherData = payload
 output application/json
 var countryData = vars.countryData
 var weatherData = payload
----
+&#45;&#45;-
 {
     country: countryData.name.common,
 	region: countryData.region,
@@ -206,7 +201,7 @@ var weatherData = payload
 	countryCode: countryData.cca2,
 	population: countryData.population,
 	capital: {
-		city: countryData.capital[0],
+		city: countryData.capital[0&#93;,
 		longitude: weatherData.coord.lon,
 		latitude: weatherData.coord.lat,
 		weatherConditions: {
@@ -220,18 +215,18 @@ var weatherData = payload
 		sunrise: weatherData.sys.sunrise,
 		sunset: weatherData.sys.sunset
 	}
-}]]></ee:set-payload>
+}&#93;&#93;></ee:set-payload>
 				</ee:message>
 			</ee:transform>
 			<amqp:publish doc:name="Publish for 2 Minutes" doc:id="875bb6b8-7bd3-4d64-a6b6-9fb92331b260" config-ref="Local_RabbitMQ_AMQP_Config" exchangeName="country.exchange" deliveryMode="PERSISTENT" createFallbackExchange="true">
 				<amqp:fallback-exchange-definition removalStrategy="UNUSED" type="TOPIC" />
 				<amqp:routing-keys>
-					<amqp:routing-key value='#[vars.countryCode ++ ".weather.updated"]' />
+					<amqp:routing-key value='#[vars.countryCode ++ ".weather.updated"&#93;' />
 				</amqp:routing-keys>
 				<amqp:message>
 					<amqp:properties contentType="application/json" expiration="4" expirationTimeUnit="MINUTES" />
 				</amqp:message>
 			</amqp:publish>
 		</parallel-foreach>
-	</sub-flow>	
+	</sub-flow> [STUDIO] -->	
 </mule>
