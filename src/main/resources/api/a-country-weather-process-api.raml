@@ -7,7 +7,19 @@ types:
   CountryWeather: !include datatypes/CountryWeather.raml
   Error: !include datatypes/Error.raml
   
-traits:    
+traits:
+  QueryParameter:
+    queryParameters:
+      country:
+        displayName: Country
+        description: Name of the country
+        type: string
+        required: true
+      city:
+        displayName: City
+        description: City of current country
+        type: string
+        required: false    
   ErrorResponse:
     responses:
       400:
@@ -41,8 +53,8 @@ traits:
                                                                   
 /country-weather:
   get:
-    description: Get information about countries
-    is: [ErrorResponse]
+    description: Get information about country weather
+    is: [QueryParameter, ErrorResponse]
     responses:
       200:
         body:

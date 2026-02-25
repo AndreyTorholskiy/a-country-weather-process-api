@@ -6,7 +6,5 @@ http:
   requester:
     countryWeatherAPI:
       basePath: "/a-country-weather-sa/api/v1"
-      connectionTimeout: "120000" # 2 minutes
     mongodbAPI:
       basePath: "/a-mongodb-sa/api/v1"
-      connectionTimeout: "120000" # 2 minutes 
