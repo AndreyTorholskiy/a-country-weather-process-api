@@ -9,7 +9,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 http://www.mulesoft.org/schema/mule/amqp http://www.mulesoft.org/schema/mule/amqp/current/mule-amqp.xsd
 http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd">
 	<flow name="publishCountrySingleQueue" doc:id="b14e64d6-0c99-4b75-8ccc-c32cbe8386e2" >
-		<scheduler doc:name="Scheduler" doc:id="9df31bf0-d6c9-4718-96a1-c04a403513b1" >
+		<scheduler doc:name="10 Minutes" doc:id="9df31bf0-d6c9-4718-96a1-c04a403513b1" >
 			<scheduling-strategy >
 				<fixed-frequency frequency="10" timeUnit="MINUTES"/>
 			</scheduling-strategy>
@@ -24,7 +24,7 @@ output application/json
 			</ee:message>
 		</ee:transform>
 		<foreach doc:name="For Each" doc:id="4d64ecf5-8f66-4fd5-91e3-9cfa264ed665" >
-			<ee:transform doc:name="Prapare Country Data" doc:id="03e08dd4-586f-44e5-84c5-b7ca06ef09a3" >
+			<ee:transform doc:name="Prepare for Exchange" doc:id="03e08dd4-586f-44e5-84c5-b7ca06ef09a3" >
 				<ee:message >
 					<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
@@ -43,10 +43,22 @@ output application/json
 }]]></ee:set-payload>
 				</ee:message>
 			</ee:transform>
-			<amqp:publish doc:name="Publish for 9 Minutes" doc:id="e4d9ffbc-32bc-4e82-afcd-48007f432371" config-ref="Local_RabbitMQ_AMQP_Config" exchangeName="country.exchange" deliveryMode="PERSISTENT" createFallbackExchange="true" >
+			<ee:transform doc:name="routingKey" doc:id="992927a1-7b42-4e2a-b79c-72c7183b99ef" >
+				<ee:message >
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="routingKey" ><![CDATA[%dw 2.0
+output application/json
+var city = payload.capital.city
+var country = payload.country
+---
+"$(country).$(city).updated"]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<amqp:publish doc:name="Publish for 9 Minutes" doc:id="e4d9ffbc-32bc-4e82-afcd-48007f432371" config-ref="Local_RabbitMQ_AMQP_Config" exchangeName="country.city.topic" deliveryMode="PERSISTENT" createFallbackExchange="true" >
 				<amqp:fallback-exchange-definition removalStrategy="UNUSED" type="TOPIC" />
 				<amqp:routing-keys >
-					<amqp:routing-key value="country.weather.updated" />
+					<amqp:routing-key value="#[vars.routingKey]" />
 				</amqp:routing-keys>
 				<amqp:message >
 					<amqp:properties contentType="application/json" expiration="9" expirationTimeUnit="MINUTES" />
@@ -55,7 +67,10 @@ output application/json
 		</foreach>
 	</flow>
 	<flow name="saveMessageToDB" doc:id="1c7af8ee-4e59-4428-9dcd-b27c42041ab5" >
-		<amqp:listener doc:name="Listener Country Weather Queue" doc:id="00452b48-0178-4576-bde3-95414b5f3e8b" config-ref="Local_RabbitMQ_AMQP_Config" queueName="country.weather.queue" ackMode="MANUAL"/>
+		<amqp:listener doc:name="Listener Country Weather Queue" doc:id="00452b48-0178-4576-bde3-95414b5f3e8b" config-ref="Local_RabbitMQ_AMQP_Config" queueName="country.city.queue" ackMode="MANUAL" numberOfConsumers="1" createFallbackQueue="true">
+			<amqp:fallback-queue-definition removalStrategy="UNUSED" exchangeToBind="country.city.topic" bindingRoutingKey="*.*.updated" />
+			<amqp:listener-quality-of-service-config prefetchCount="1" />
+		</amqp:listener>
 <set-variable value="#[attributes.ackId]" doc:name="ackId" doc:id="8583645e-bc0d-462e-88fe-b3633226e26e" variableName="ackId"/>
 		<set-variable value="#[payload.capital.city]" doc:name="city" doc:id="2804e972-1c25-4079-9da0-509c72ca27e1" variableName="city"/>
 		<http:request doc:name="GET Weather" doc:id="921e82ef-99cb-4bdb-937c-70fa2eae371b" path="${http.requester.countryWeatherAPI.basePath}/weather" target="weatherData" config-ref="HTTP_Domain_Request_config">
@@ -107,12 +122,12 @@ var weatherData = vars.weatherData
 		<amqp:ack doc:name="Ack" doc:id="b6520a79-1718-4739-8996-dc8448cca485" ackId="#[vars.ackId]"/>
 	</flow>
 	<sub-flow name="getCountryWeatherFromDB" doc:id="862b32ff-9330-4c8d-9b6f-07f80888d2f0" >
-		<set-variable value='#[attributes.queryParams.country default ""]' doc:name="queryParam" doc:id="7b976295-1134-4bea-ba83-cc2856d12ccc" variableName="queryParam" />
-		<http:request doc:name="GET CountryWeather from DB" doc:id="f9fcb6c8-669e-4835-bb69-deb2ab6f4cac" config-ref="HTTP_Domain_Request_config" path="${http.requester.mongodbAPI.basePath}/country-weather" responseTimeout="30000" >
+		<set-variable value='#[attributes.queryParams.country default ""]' doc:name="country" doc:id="7b976295-1134-4bea-ba83-cc2856d12ccc" variableName="country" />
+		<http:request doc:name="GET Country Weather from DB" doc:id="f9fcb6c8-669e-4835-bb69-deb2ab6f4cac" config-ref="HTTP_Domain_Request_config" path="${http.requester.mongodbAPI.basePath}/country-weather" responseTimeout="30000" >
 			<http:query-params ><![CDATA[#[output application/java
 ---
 {
-	"country" : vars.queryParam
+	"country" : vars.country
 }]]]></http:query-params>
 		</http:request>
 	</sub-flow>
