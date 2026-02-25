@@ -14,7 +14,7 @@ http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mo
 				<fixed-frequency frequency="10" timeUnit="MINUTES"/>
 			</scheduling-strategy>
 		</scheduler>
-		<http:request doc:name="GET Country" doc:id="6bdda1a3-db72-4d36-a879-03577f7c36cb" config-ref="HTTP_Domain_Request_config" path="${http.requester.countryWeatherAPI.basePath}/country" />
+		<http:request doc:name="Call a-country-weather-system-api /country" doc:id="6bdda1a3-db72-4d36-a879-03577f7c36cb" config-ref="HTTP_Domain_Request_config" path="${http.requester.countryWeatherAPI.basePath}/country" />
 		<ee:transform doc:name="Random 3 Europe Country" doc:id="843aa210-ed35-4f6a-866d-5c7d98df80ad" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
@@ -73,7 +73,7 @@ var country = payload.country
 		</amqp:listener>
 <set-variable value="#[attributes.ackId]" doc:name="ackId" doc:id="8583645e-bc0d-462e-88fe-b3633226e26e" variableName="ackId"/>
 		<set-variable value="#[payload.capital.city]" doc:name="city" doc:id="2804e972-1c25-4079-9da0-509c72ca27e1" variableName="city"/>
-		<http:request doc:name="GET Weather" doc:id="921e82ef-99cb-4bdb-937c-70fa2eae371b" path="${http.requester.countryWeatherAPI.basePath}/weather" target="weatherData" config-ref="HTTP_Domain_Request_config">
+		<http:request doc:name="Call a-country-weather-system-api /weather" doc:id="921e82ef-99cb-4bdb-937c-70fa2eae371b" path="${http.requester.countryWeatherAPI.basePath}/weather" target="weatherData" config-ref="HTTP_Domain_Request_config">
 			<http:query-params ><![CDATA[#[output application/java
 ---
 {
@@ -117,13 +117,13 @@ var weatherData = vars.weatherData
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<http:request doc:name="POST Save to DB" doc:id="69cfeb0c-08db-4619-bd53-f9bd5fd296ec" method="POST" config-ref="HTTP_Domain_Request_config" path="${http.requester.mongodbAPI.basePath}/country-weather">
+		<http:request doc:name="Call a-mongodb-system-api /country-weather" doc:id="69cfeb0c-08db-4619-bd53-f9bd5fd296ec" method="POST" config-ref="HTTP_Domain_Request_config" path="${http.requester.mongodbAPI.basePath}/country-weather">
 		</http:request>
 		<amqp:ack doc:name="Ack" doc:id="b6520a79-1718-4739-8996-dc8448cca485" ackId="#[vars.ackId]"/>
 	</flow>
 	<sub-flow name="getCountryWeatherFromDB" doc:id="862b32ff-9330-4c8d-9b6f-07f80888d2f0" >
 		<set-variable value='#[attributes.queryParams.country default ""]' doc:name="country" doc:id="7b976295-1134-4bea-ba83-cc2856d12ccc" variableName="country" />
-		<http:request doc:name="GET Country Weather from DB" doc:id="f9fcb6c8-669e-4835-bb69-deb2ab6f4cac" config-ref="HTTP_Domain_Request_config" path="${http.requester.mongodbAPI.basePath}/country-weather" responseTimeout="30000" >
+		<http:request doc:name="Call a-mongodb-system-api /country-weather" doc:id="f9fcb6c8-669e-4835-bb69-deb2ab6f4cac" config-ref="HTTP_Domain_Request_config" path="${http.requester.mongodbAPI.basePath}/country-weather" responseTimeout="30000" >
 			<http:query-params ><![CDATA[#[output application/java
 ---
 {
