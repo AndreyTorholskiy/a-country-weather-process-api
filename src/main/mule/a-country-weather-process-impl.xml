@@ -21,8 +21,10 @@ http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mu
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
+var removeCountries = ["Russia", "Belarus", "Hungary"]
+fun filterArray(countriesArray) = countriesArray filter !(removeCountries contains $.name.common)
 ---
-(payload orderBy ((item, index) -> random()))[0 to 2]]]></ee:set-payload>
+(filterArray(payload) orderBy random())[0 to 2]]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 		<foreach doc:name="For Each" doc:id="4d64ecf5-8f66-4fd5-91e3-9cfa264ed665" >
