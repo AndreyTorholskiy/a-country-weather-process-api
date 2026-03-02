@@ -8,3 +8,8 @@ http:
       basePath: "/a-country-weather-sa/api/v1"
     mongodbAPI:
       basePath: "/a-mongodb-sa/api/v1"
+
+rabbitMQ:
+  exchange: "country.city.exchange"
+  queue: "country.city.queue"
+  routingKey: "*.*.updated"
