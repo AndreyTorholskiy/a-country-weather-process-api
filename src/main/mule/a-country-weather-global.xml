@@ -7,5 +7,7 @@
 http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
     <apikit:config name="a-country-weather-process-api-config" api="a-country-weather-process-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
 	<configuration-properties doc:name="Configuration properties" doc:id="bfdc5997-ae72-4b92-9703-129c2d35bbe7" file="config\local-properties.yaml" />	
-
+	<import doc:name="Import error handling" doc:id="2e67f114-afd4-4708-a40d-32972f175cb4" file="a-error-common.xml" />
+	<configuration doc:name="Configuration" doc:id="9d336560-c433-48d2-92d6-546a9141a611" defaultErrorHandler-ref="a-globalError_Handler" />
+	<import doc:name="Import common logging" doc:id="d7ae4a31-0470-437d-98ea-472cf50ed859" file="a-logging-common.xml" />
 </mule>
