@@ -1,0 +1,22 @@
+#%RAML 1.0 DataType
+displayName: Published Status
+description: Status information after publishing
+
+type: object
+properties:
+  status:
+    displayName: Status
+    description: Information about status
+    type: string
+  queue:
+    displayName: Queue
+    description: Name of the published queue
+    type: string
+  published:
+    displayName: Published
+    description: Number of published records
+    type: integer
+  publishedCountries:
+    displayName: Published Countries
+    description: Name of the punlished countries
+    type: string[]

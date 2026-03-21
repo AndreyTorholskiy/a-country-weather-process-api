@@ -1,0 +1,9 @@
+{
+	"status": "Success",
+	"queue": "country.city.queue",
+	"published": 2,
+	"publishedCountries": [
+		"Kingdom of Spain",
+		"Ukraine"
+	]
+}

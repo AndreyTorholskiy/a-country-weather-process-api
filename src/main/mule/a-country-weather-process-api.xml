@@ -10,7 +10,9 @@
                 <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
             </http:error-response>
         </http:listener>
+        <flow-ref doc:name="initialRequestLogging" doc:id="b38fbd4b-11e3-4c53-a3c4-60f535f70f34" name="initialRequestLogging" />
         <apikit:router config-ref="a-country-weather-process-api-config" />
+        <flow-ref doc:name="finalLoggerMessage" doc:id="4802f49f-141c-47ad-83ec-5b2f4e3d38bb" name="finalLoggerMessage" />
     </flow>
     <flow name="a-country-weather-process-api-console">
         <http:listener path="${http.listener.basePath}/console/*" config-ref="HTTP_Domain_Listener_config">
@@ -25,6 +27,34 @@
         <apikit:console config-ref="a-country-weather-process-api-config" />
     </flow>
     <flow name="get:\country-weather:a-country-weather-process-api-config">
-		<flow-ref doc:name="getCountryWeatherFromDB" doc:id="8c95ded6-edf6-49d4-8e6c-75be7f9805ed" name="getCountryWeatherFromDB" />
+        <flow-ref doc:name="getCountryWeatherFromDB" doc:id="8c95ded6-edf6-49d4-8e6c-75be7f9805ed" name="getCountryWeatherFromDB" />
+    </flow>
+    <flow name="get:\countries:a-country-weather-process-api-config">
+        <flow-ref doc:name="processRandomCountriesPublish" doc:id="8dd751f5-feb4-4c58-b9a6-0928234c07be" name="processRandomCountriesPublish" />
+    </flow>
+    <flow name="post:\countries:application\json:a-country-weather-process-api-config">
+        <flow-ref doc:name="publishCountriesToSingleQueue" doc:id="c7be7ede-4a3d-4824-84a8-8995307b4ec3" name="publishCountriesToSingleQueue"/>
+    </flow>
+	<flow name="publishCountriesScheduler" doc:id="38151831-a1a3-41e8-b3d5-6e83313dfc3a">
+        <scheduler doc:name="10 Minutes" doc:id="0c65f7b4-2319-4807-852f-7e149aeefcc7">
+            <scheduling-strategy>
+                <fixed-frequency frequency="10" startDelay="2" timeUnit="MINUTES" />
+            </scheduling-strategy>
+        </scheduler>
+        <flow-ref doc:name="initialRequestLogging" doc:id="eceb99da-0fb4-4acd-b072-eb0ef83afe15" name="initialRequestLogging" />
+		<ee:transform doc:name="Logger Message: Flow Start" doc:id="3ab17567-9809-4e60-8160-1162c6f8fa5c">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="logMessage"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Scheduler publish to exchange"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="auditLogging" doc:id="21dfdad6-3787-4a8b-99b8-45438ad91978" name="auditLogging" />
+		<flow-ref doc:name="processRandomCountriesPublish" doc:id="ff8e2f27-1194-461a-97e0-08dd5b513193" name="processRandomCountriesPublish" />
+        <flow-ref doc:name="finalLoggerMessage" doc:id="67eb2e5f-a926-4ac1-b9f9-c6b69708c4c5" name="finalLoggerMessage" />
     </flow>
 </mule>

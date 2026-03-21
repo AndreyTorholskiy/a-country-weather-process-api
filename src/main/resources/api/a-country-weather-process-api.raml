@@ -5,6 +5,8 @@ mediaType: application/json
 
 types:
   CountryWeather: !include datatypes/CountryWeather.raml
+  PublishStatus: !include datatypes/PublishStatus.raml
+  Country: !include datatypes/Country.raml
   Error: !include datatypes/Error.raml
   
 traits:
@@ -50,7 +52,7 @@ traits:
         body:
           type: Error
           example: !include examples/errors/501.json    
-                                                                  
+                                                                                                                           
 /country-weather:
   get:
     description: Get information about country weather
@@ -61,3 +63,27 @@ traits:
           application/json:
             type: CountryWeather
             example: !include examples/country-weather-example.json
+            
+/countries:
+  get:
+    description: Publishing to exchange random countries
+    is: [ErrorResponse]
+    responses:
+      200:
+        body:
+          application/json:
+            type: PublishStatus
+            example: !include examples/publish-status-example.json
+  post:
+    description: Manually publishing countries to exchange
+    is: [ErrorResponse]
+    body:
+      application/json:
+        type: Country[]
+        example: !include examples/country-list-example.json
+    responses:
+      201:
+       body:
+        application/json:
+          type: PublishStatus
+          example: !include examples/publish-status-example.json 
