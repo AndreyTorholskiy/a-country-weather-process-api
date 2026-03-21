@@ -10,6 +10,7 @@ http:
       basePath: "/a-mongodb-sa/api/v1"
 
 rabbitMQ:
-  exchange: "country.city.exchange"
+  exchange: "country.city.topic"
   queue: "country.city.queue"
   routingKey: "*.*.updated"
+  deadLetterQueue: "country.city.dlq"
