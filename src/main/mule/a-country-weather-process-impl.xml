@@ -49,13 +49,9 @@ output application/json
 				<ee:variables>
 					<ee:set-variable variableName="routingKey"><![CDATA[%dw 2.0
 output application/json
-
-var city = lower(payload.capital.city) default "UNKNOWN"
-var country = lower(payload.country) default "UNKNOWN"
-
-fun replaceLogic (inputString: String) = inputString replace /[. ]+/ with ("_")
+import createRoutingKeyMapping from modules::RoutingKeyMappingLogic
 ---
-"$(replaceLogic(country)).$(replaceLogic(city)).updated"]]></ee:set-variable>
+createRoutingKeyMapping(payload.country, payload.capital.city,"updated")]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
 			<amqp:publish doc:name="Publish" doc:id="e4d9ffbc-32bc-4e82-afcd-48007f432371" config-ref="Local_RabbitMQ_AMQP_Config" exchangeName="${rabbitMQ.exchange}" deliveryMode="PERSISTENT" createFallbackExchange="true">
@@ -293,13 +289,9 @@ var retryCount = vars.retryCount default 0
 			<ee:variables>
 				<ee:set-variable variableName="routingKey"><![CDATA[%dw 2.0
 output application/json
-
-var city = lower(payload.capital.city) default "UNKNOWN"
-var country = lower(payload.country) default "UNKNOWN"
-
-fun replaceLogic (inputString: String) = inputString replace /[. ]+/ with ("_")
+import createRoutingKeyMapping from modules::RoutingKeyMappingLogic
 ---
-"$(replaceLogic(country)).$(replaceLogic(city)).restored"]]></ee:set-variable>
+createRoutingKeyMapping(payload.country, payload.capital.city,"restored")]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
 				<amqp:publish doc:name="Publish" doc:id="6470b5e8-0099-4be9-a58f-165978bc547e" config-ref="Local_RabbitMQ_AMQP_Config" exchangeName="${rabbitMQ.exchange}" deliveryMode="PERSISTENT" createFallbackExchange="true" sendCorrelationId="NEVER">
