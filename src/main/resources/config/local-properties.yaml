@@ -14,3 +14,6 @@ rabbitMQ:
   queue: "country.city.queue"
   routingKey: "*.*.updated"
   deadLetterQueue: "country.city.dlq"
+  
+log:
+  dir: "![aIU7YR+b/5wNP4kgLrf258t4CtMq/BGWIQy92rhidXFZG/6kxl0QEw43xeZPCx/jGFuyFn3ZuEY=]"
