@@ -147,13 +147,13 @@ output application/json
 		<flow-ref doc:name="auditLogging" doc:id="d50a22ad-c121-401e-8d45-daeb4758ebba" name="auditLogging" />
 		<set-variable value="#[attributes.ackId]" doc:name="ackId" doc:id="8583645e-bc0d-462e-88fe-b3633226e26e" variableName="ackId"/>
 		<set-variable value="#[payload.capital.city]" doc:name="city" doc:id="2804e972-1c25-4079-9da0-509c72ca27e1" variableName="city"/>
-		<http:request doc:name="Call a-country-weather-system-api /weather" doc:id="d0fa02f5-b45d-4ff7-9b13-7ed56cb5545c" config-ref="HTTP_Domain_Request_config" path="${http.requester.countryWeatherAPI.basePath}/weather" target="weatherData">
+		<!-- [STUDIO:"Call a-country-weather-system-api /weather"]<http:request doc:name="Call a-country-weather-system-api /weather" doc:id="d0fa02f5-b45d-4ff7-9b13-7ed56cb5545c" config-ref="HTTP_Domain_Request_config" path="${http.requester.countryWeatherAPI.basePath}/weather" target="weatherData">
 					<http:query-params><![CDATA[#[output application/java
----
+&#45;&#45;-
 {
 	"city" : vars.city
-}]]]></http:query-params>
-				</http:request>
+}&#93;&#93;&#93;></http:query-params>
+				</http:request> [STUDIO] -->
 		<ee:transform doc:name="Prepare for DB" doc:id="f0962b74-e3a1-4f8e-a6c7-716da8197f51">
 					<ee:message>
 						<ee:set-payload><![CDATA[%dw 2.0
@@ -201,7 +201,7 @@ output application/json
 ---
 {
     message: "Save to DB: DB response",
-    savedCountryWeather: payload.country
+    savedCountryWeather: payload.upsertedDocument.country
 }]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
@@ -282,6 +282,30 @@ var retryCount = vars.retryCount default 0
 			</ee:variables>
 		</ee:transform>
 		<try doc:name="Try" doc:id="4ffaf2e4-3ccd-461e-b0da-6c19f92f19a3" >
+			<ee:transform doc:name="Logger Message: Error Info" doc:id="3bbb3b89-3e35-4bb7-93ab-c831d4ecccd6">
+			<ee:message>
+			</ee:message>
+						<ee:variables>
+					<ee:set-variable variableName="logMessage" ><![CDATA[%dw 2.0
+output application/json
+
+var deathHeader = attributes.headers."x-death"[0]
+var deathProperties = attributes.properties
+var retryCount = attributes.headers.retryCount
+---
+{
+	metadata: {
+		retryCount: retryCount,
+        deathQueue: deathHeader.queue.stream,
+        deathExchange: deathHeader.exchange.stream,
+        deathReason: deathHeader.reason.stream,
+        correlationId: deathProperties.correlationId,
+        appName: deathProperties.appId
+	}
+}]]></ee:set-variable>
+						</ee:variables>
+		</ee:transform>
+			<flow-ref doc:name="auditLogging" doc:id="e6c90cd2-4f04-4bf8-84b2-bb869419380f" name="auditLogging"/>
 			<choice doc:name="Choice" doc:id="6831ab45-6642-40bf-9972-5bc3af82d78c">
 			<when expression="#[vars.choiceExpression]">
 				<ee:transform doc:name="routingKey" doc:id="8c3674ad-e5d0-4022-a469-da05cf5ba765">
@@ -306,10 +330,10 @@ createRoutingKeyMapping(payload.country, payload.capital.city,"restored")]]></ee
 			</amqp:message>
 		</amqp:publish>
 			</when>
-			<otherwise>
-				<ee:transform doc:name="Prepare Error for DB" doc:id="3bbb3b89-3e35-4bb7-93ab-c831d4ecccd6">
-			<ee:message>
-				<ee:set-payload><![CDATA[%dw 2.0
+				<otherwise>
+					<ee:transform doc:name="Prepare for DB" doc:id="f7b6c3fa-7267-463b-92ad-5c9d1b92aa1a">
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
 var errorMessage = vars.errorMessage
 var deathHeader = attributes.headers."x-death"[0]
@@ -328,10 +352,10 @@ var retryCount = attributes.headers.retryCount
 	errorMessage: errorMessage.errorInfo,
 	payload: payload
 }]]></ee:set-payload>
-			</ee:message>
-						<ee:variables >
+						</ee:message>
+						<ee:variables>
 						</ee:variables>
-		</ee:transform>
+					</ee:transform>
 					<http:request doc:name="Call a-mongodb-system-api /dead-letter" doc:id="7d58d598-ae44-40c7-bab7-ade5f54258ea" config-ref="HTTP_Domain_Request_config" path="${http.requester.mongodbAPI.basePath}/dead-letter" method="POST">
 				</http:request>
 			</otherwise>

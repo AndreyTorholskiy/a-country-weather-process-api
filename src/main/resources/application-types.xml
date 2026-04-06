@@ -286,4 +286,5 @@ type auto_730d9f0e_0917_4888_a969_6a243fab4e2b_Output_Variables_initialRequest =
       </types:output-event>
     </types:processor-declaration>
   </types:enrichment>
+  <types:enrichment select="#3bbb3b89-3e35-4bb7-93ab-c831d4ecccd6"/>
 </types:mule>
