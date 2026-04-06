@@ -54,7 +54,7 @@ import createRoutingKeyMapping from modules::RoutingKeyMappingLogic
 createRoutingKeyMapping(payload.country, payload.capital.city,"updated")]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
-			<amqp:publish doc:name="Publish" doc:id="e4d9ffbc-32bc-4e82-afcd-48007f432371" config-ref="Local_RabbitMQ_AMQP_Config" exchangeName="${rabbitMQ.exchange}" deliveryMode="PERSISTENT" createFallbackExchange="true">
+			<amqp:publish doc:name="Publish" doc:id="e4d9ffbc-32bc-4e82-afcd-48007f432371" config-ref="RabbitMQ_CloudAMQP_Config" exchangeName="${rabbitMQ.exchange}" deliveryMode="PERSISTENT" createFallbackExchange="true">
 				<reconnect />
 				<amqp:fallback-exchange-definition removalStrategy="UNUSED" type="TOPIC" />
 				<amqp:routing-keys>
@@ -124,7 +124,7 @@ fun filterArray(countriesArray) = countriesArray filter !(removeCountries contai
 		<flow-ref doc:name="publishCountrySingleQueue" doc:id="4b44a609-d125-4cbf-8f06-3cf3e1eaf2c0" name="publishCountriesToSingleQueue" />
 	</sub-flow>
 	<flow name="saveQueueMessageToDB" doc:id="1c7af8ee-4e59-4428-9dcd-b27c42041ab5" >
-		<amqp:listener doc:name="Listener Country Weather Queue" doc:id="00452b48-0178-4576-bde3-95414b5f3e8b" config-ref="Local_RabbitMQ_AMQP_Config" queueName="${rabbitMQ.queue}" ackMode="MANUAL" numberOfConsumers="1">
+		<amqp:listener doc:name="Listener Country Weather Queue" doc:id="00452b48-0178-4576-bde3-95414b5f3e8b" config-ref="RabbitMQ_CloudAMQP_Config" queueName="${rabbitMQ.queue}" ackMode="MANUAL" numberOfConsumers="1">
 			<amqp:fallback-queue-definition removalStrategy="UNUSED" exchangeToBind="${rabbitMQ.exchange}" bindingRoutingKey="${rabbitMQ.routingKey}" />
 			<amqp:listener-quality-of-service-config prefetchCount="1" />
 			<amqp:response >
@@ -244,7 +244,7 @@ output application/json
 	
 </sub-flow>
 	<flow name="saveDeadLetterToDB" doc:id="ac525991-1efa-4ae1-bdbb-77ae1c769cad" >
-		<amqp:listener doc:name="Listener DLQ" doc:id="082158f4-666a-4021-900d-654cf277508c" config-ref="Local_RabbitMQ_AMQP_Config" queueName="${rabbitMQ.deadLetterQueue}" ackMode="MANUAL">
+		<amqp:listener doc:name="Listener DLQ" doc:id="082158f4-666a-4021-900d-654cf277508c" config-ref="RabbitMQ_CloudAMQP_Config" queueName="${rabbitMQ.deadLetterQueue}" ackMode="MANUAL">
 			<amqp:listener-quality-of-service-config prefetchCount="1" />
 			<amqp:response >
 				<amqp:properties contentType="application/json"/>
@@ -294,7 +294,7 @@ import createRoutingKeyMapping from modules::RoutingKeyMappingLogic
 createRoutingKeyMapping(payload.country, payload.capital.city,"restored")]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-				<amqp:publish doc:name="Publish" doc:id="6470b5e8-0099-4be9-a58f-165978bc547e" config-ref="Local_RabbitMQ_AMQP_Config" exchangeName="${rabbitMQ.exchange}" deliveryMode="PERSISTENT" createFallbackExchange="true" sendCorrelationId="NEVER">
+				<amqp:publish doc:name="Publish" doc:id="6470b5e8-0099-4be9-a58f-165978bc547e" config-ref="RabbitMQ_CloudAMQP_Config" exchangeName="${rabbitMQ.exchange}" deliveryMode="PERSISTENT" createFallbackExchange="true" sendCorrelationId="NEVER">
 			<reconnect />
 			<amqp:fallback-exchange-definition removalStrategy="UNUSED" type="TOPIC" />
 			<amqp:routing-keys>
