@@ -282,7 +282,6 @@ var retryCount = vars.retryCount default 0
 			</ee:variables>
 		</ee:transform>
 		<try doc:name="Try" doc:id="4ffaf2e4-3ccd-461e-b0da-6c19f92f19a3" >
-			<raise-error doc:name="Raise error" doc:id="3796e116-7a8b-4421-90d6-cc16c5268c00" type="SOME:ERROR"/>
 			<ee:transform doc:name="Logger Message: Error Info" doc:id="3bbb3b89-3e35-4bb7-93ab-c831d4ecccd6">
 			<ee:message>
 			</ee:message>
