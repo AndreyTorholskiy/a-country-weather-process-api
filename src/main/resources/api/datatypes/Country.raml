@@ -1,0 +1,63 @@
+#%RAML 1.0 DataType
+displayName: Country
+description: Country object
+
+type: object
+properties:
+  name:
+    displayName: Name Object
+    type: object
+    required: true
+    properties:
+      common:
+        displayName: Common Name
+        description: Common name of the country
+        type: string
+        required: true
+      official:
+        displayName: Official Name
+        description: Official name of the country
+        type: string
+        required: false
+      nativeName:
+        displayName: Native Names
+        description: Name in native languages
+        type: object
+        required: false
+  cca2:
+    displayName: Country Code
+    description: Code of the country
+    type: string
+    required: true
+  currencies:
+    displayName: Currencies
+    description: Dynamic object of currencies used in the country
+    type: object
+    required: false
+  capital:
+    displayName: Capital Cities
+    description: List of capital cities
+    type: array
+    items:
+      type: string
+    required: false
+  region:
+    displayName: Region
+    description: Continent or main region
+    type: string
+    required: false
+  subregion:
+    displayName: Subregion
+    description: More specific region
+    type: string
+    required: false
+  languages:
+    displayName: Languages
+    description: Dynamic object of official languages
+    type: object
+    required: false
+  population:
+    displayName: Population
+    description: Total population count
+    type: integer
+    required: false

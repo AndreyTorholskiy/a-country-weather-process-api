@@ -1,0 +1,30 @@
+[
+  {
+    "name": {
+      "common": "Ukraine",
+      "official": "Ukraine",
+      "nativeName": {
+        "ukr": {
+          "official": "Україна",
+          "common": "Україна"
+        }
+      }
+    },
+    "cca2": "UA",
+    "currencies": {
+      "UAH": {
+        "name": "Ukrainian hryvnia",
+        "symbol": "₴"
+      }
+    },
+    "capital": [
+      "Kyiv"
+    ],
+    "region": "Europe",
+    "subregion": "Eastern Europe",
+    "languages": {
+      "ukr": "Ukrainian"
+    },
+    "population": 32862000
+  }
+]

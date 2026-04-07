@@ -1,0 +1,79 @@
+#%RAML 1.0 DataType
+displayName: Country Weather
+description: Aggregated country and weather data
+
+type: object
+properties:
+  country:
+    displayName: Country
+    description: Country name
+    type: string
+  region:
+    displayName: Region
+    description: Continent or main region
+    type: string
+  subregion:
+    displayName: Subregion
+    description: More specific region
+    type: string
+  currencies:
+    displayName: Currencies
+    description: Dynamic object of currencies used in the country
+    type: object
+  languages:
+    displayName: Languages
+    description: Dynamic object of official languages
+    type: object
+  population:
+    displayName: Population
+    description: Total population count
+    type: integer
+  countryCode:
+    displayName: Country Code
+    description: Two letter country code
+    type: string
+  timezone: 
+    displayName: Time zone
+    description: Time shift from UTC
+    type: integer
+  capital:
+    displayName: Capital
+    description: Information about capital
+    type: object
+    properties:
+      city:
+        displayName: Capital name
+        description: Name of the capital
+        type: string
+      longitude:
+        type: number
+      latitude:
+        type: number
+      seaLevel:
+        type: integer
+        required: false
+      weatherConditions:
+        displayName: Weather info
+        description: Information about weather
+        type: object
+        properties:
+          visibility:
+            type: integer
+          temperature:
+            type: object
+            properties:
+              degrees:
+                type: string
+              current:
+                type: number
+              max:
+                type: number
+              min:
+                type: number
+      sunrise:
+        type: integer
+      sunset:
+        type: integer
+      weatherOn:
+        description: Time when Country Weather was published into DB
+        type: datetime   

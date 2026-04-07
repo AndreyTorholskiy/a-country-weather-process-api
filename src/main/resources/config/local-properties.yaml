@@ -1,0 +1,19 @@
+version: "v1"
+
+http:
+  listener:
+    basePath: "/a-country-weather-pa/api/${version}"
+  requester:
+    countryWeatherAPI:
+      basePath: "/a-country-weather-sa/api/v1"
+    mongodbAPI:
+      basePath: "/a-mongodb-sa/api/v1"
+
+rabbitMQ:
+  exchange: "country.city.topic"
+  queue: "country.city.queue"
+  routingKey: "*.*.updated"
+  deadLetterQueue: "country.city.dlq"
+  
+log:
+  dir: "![vcJMBTa4dLDER1D2HZlItNt84INBS1rafykZXj/1YDkWidunoKkI7UuhwuBfYxIKSvPSuV7zPtF9BkfaQXzMMA==]"

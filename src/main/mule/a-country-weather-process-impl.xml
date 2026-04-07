@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule
+	xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:amqp="http://www.mulesoft.org/schema/mule/amqp" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/amqp http://www.mulesoft.org/schema/mule/amqp/current/mule-amqp.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<sub-flow name="publishCountriesToSingleQueue" doc:id="1b84729c-c74f-4aba-a014-35256c50e796" >
+		<ee:transform doc:name="Logger Message: Flow Start" doc:id="d9b1cf73-95bc-4d97-a609-1ed43300f9da">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="logMessage"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Publish countries to exchange",
+	countryCount: sizeOf(payload default [])
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="auditLogging" doc:id="8baa6e5c-c1e5-4cea-8953-a6496e84f649" name="auditLogging" />
+		<foreach doc:name="For Each" doc:id="4d64ecf5-8f66-4fd5-91e3-9cfa264ed665">
+			<ee:transform doc:name="Prepare for Exchange" doc:id="03e08dd4-586f-44e5-84c5-b7ca06ef09a3">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	country: payload.name.common,
+	region: payload.region,
+	subregion: payload.subregion,
+	currencies: payload.currencies,
+	languages: payload.languages,
+	population: payload.population,
+	countryCode: payload.cca2,
+	capital: {
+		city: payload.capital[0]
+	}
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<ee:transform doc:name="routingKey" doc:id="992927a1-7b42-4e2a-b79c-72c7183b99ef">
+				<ee:message>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="routingKey"><![CDATA[%dw 2.0
+output application/json
+import createRoutingKeyMapping from modules::RoutingKeyMappingLogic
+---
+createRoutingKeyMapping(payload.country, payload.capital.city,"updated")]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<amqp:publish doc:name="Publish" doc:id="e4d9ffbc-32bc-4e82-afcd-48007f432371" config-ref="RabbitMQ_CloudAMQP_Config" exchangeName="${rabbitMQ.exchange}" deliveryMode="PERSISTENT" createFallbackExchange="true">
+				<reconnect />
+				<amqp:fallback-exchange-definition removalStrategy="UNUSED" type="TOPIC" />
+				<amqp:routing-keys>
+					<amqp:routing-key value="#[vars.routingKey]" />
+				</amqp:routing-keys>
+				<amqp:message>
+					<amqp:properties contentType="application/json" appId="#[app.name]" timestamp="#[now()]" messageId="#[uuid()]" />
+					<amqp:headers ><![CDATA[#[{
+	retryCount: 0
+}]]]></amqp:headers>
+				
+</amqp:message>
+			</amqp:publish>
+		
+</foreach>
+		<ee:transform doc:name="Logger Message: Publisher Response" doc:id="a290aa2a-438f-41b9-828f-ba801a245530">
+				<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "Success",
+    "queue": p("rabbitMQ.queue"),
+    "published": sizeOf(payload default []),
+    "publishedCountries": payload map $.name.common default []
+}]]></ee:set-payload>
+			</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="logMessage"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "Success",
+    "queue": p("rabbitMQ.queue"),
+    "published": sizeOf(payload default []),
+    "publishedCountries": payload map $.name.common default []
+}]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+	</sub-flow>
+	<sub-flow name="processRandomCountriesPublish" doc:id="4bcee4bf-82dd-4def-9289-eef8eba1a697" >
+		<ee:transform doc:name="Logger Message: Flow Start" doc:id="2f99bf25-d337-457a-9335-210384548d8b">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="logMessage"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Process random three countries request"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="auditLogging" doc:id="ea62f923-7d32-4c1c-81ff-3ecb4b064218" name="auditLogging" />
+		<http:request doc:name="Call a-country-weather-system-api /country" doc:id="6bdda1a3-db72-4d36-a879-03577f7c36cb" config-ref="HTTP_Domain_Request_config" path="${http.requester.countryWeatherAPI.basePath}/country">
+		</http:request>
+		<validation:is-not-empty-collection doc:name="Is Country Retrieved" doc:id="2690e72b-1d87-4923-b3ad-2742b36b9a8d" message="No countries were retrieved" />
+		<ee:transform doc:name="Random 3 Europe Country" doc:id="843aa210-ed35-4f6a-866d-5c7d98df80ad">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var removeCountries = ["Russia", "Belarus", "Hungary"]
+fun filterArray(countriesArray) = countriesArray filter !(removeCountries contains $.name.common)
+---
+(filterArray(payload) orderBy random())[0 to 2]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="publishCountrySingleQueue" doc:id="4b44a609-d125-4cbf-8f06-3cf3e1eaf2c0" name="publishCountriesToSingleQueue" />
+	</sub-flow>
+	<flow name="saveQueueMessageToDB" doc:id="1c7af8ee-4e59-4428-9dcd-b27c42041ab5" >
+		<amqp:listener doc:name="Listener Country Weather Queue" doc:id="00452b48-0178-4576-bde3-95414b5f3e8b" config-ref="RabbitMQ_CloudAMQP_Config" queueName="${rabbitMQ.queue}" ackMode="MANUAL" numberOfConsumers="1">
+			<amqp:fallback-queue-definition removalStrategy="UNUSED" exchangeToBind="${rabbitMQ.exchange}" bindingRoutingKey="${rabbitMQ.routingKey}" />
+			<amqp:listener-quality-of-service-config prefetchCount="1" />
+			<amqp:response >
+				<amqp:properties contentType="application/json" />
+			</amqp:response>
+		
+</amqp:listener>
+		<flow-ref doc:name="initialRequestLogging" doc:id="6ca757be-7a5f-47a0-ad70-9ea6184a9319" name="initialRequestLogging" />
+		<ee:transform doc:name="Logger Message: Flow Start" doc:id="1c0edf40-da53-423b-93cc-2616e07f9151">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="logMessage"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Consume message from exchange and save to DB"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="auditLogging" doc:id="d50a22ad-c121-401e-8d45-daeb4758ebba" name="auditLogging" />
+		<set-variable value="#[attributes.ackId]" doc:name="ackId" doc:id="8583645e-bc0d-462e-88fe-b3633226e26e" variableName="ackId"/>
+		<set-variable value="#[payload.capital.city]" doc:name="city" doc:id="2804e972-1c25-4079-9da0-509c72ca27e1" variableName="city"/>
+		<http:request doc:name="Call a-country-weather-system-api /weather" doc:id="d0fa02f5-b45d-4ff7-9b13-7ed56cb5545c" config-ref="HTTP_Domain_Request_config" path="${http.requester.countryWeatherAPI.basePath}/weather" target="weatherData">
+					<http:query-params><![CDATA[#[output application/java
+---
+{
+	"city" : vars.city
+}]]]></http:query-params>
+				</http:request>
+		<ee:transform doc:name="Prepare for DB" doc:id="f0962b74-e3a1-4f8e-a6c7-716da8197f51">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var countryData = payload
+var weatherData = vars.weatherData
+---
+{
+    country: countryData.country,
+	region: countryData.region,
+	subregion: countryData.subregion,
+	currencies: countryData.currencies,
+	languages: countryData.languages,
+	countryCode: countryData.countryCode,
+	timezone: weatherData.timezone,
+	population: countryData.population,
+	capital: {
+		city: vars.city,
+		longitude: weatherData.coord.lon,
+		latitude: weatherData.coord.lat,
+		seaLevel: weatherData.main.sea_level,
+		weatherConditions: {
+			visibility: weatherData.visibility,
+			temperature: {
+				degrees: "Celsius",
+				current: weatherData.main.temp,
+				max: weatherData.main.temp_max,
+				min: weatherData.main.temp_min
+			}
+		},
+		sunrise: weatherData.sys.sunrise,
+		sunset: weatherData.sys.sunset,
+		weatherOn: now()
+	}
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+		<http:request doc:name="Call a-mongodb-system-api /country-weather" doc:id="02987e92-3c7a-42a9-99b6-db1e983d57bd" config-ref="HTTP_Domain_Request_config" method="POST" path="${http.requester.mongodbAPI.basePath}/country-weather">
+			</http:request>
+		<ee:transform doc:name="Logger Message: DB Response" doc:id="85df3bf4-c30a-4cf7-9b98-7d3bf5b5313c">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="logMessage"><![CDATA[%dw 2.0
+output application/json
+---
+{
+    message: "Save to DB: DB response",
+    savedCountryWeather: payload.upsertedDocument.country
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="finalLoggerMessage" doc:id="fd32ff36-da55-4fd8-b0e0-80ee2d539984" name="finalLoggerMessage" />
+		<amqp:ack doc:name="Ack" doc:id="b6520a79-1718-4739-8996-dc8448cca485" ackId="#[vars.ackId]"/>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="c3a8408e-cbbe-4ae8-85b9-1cad1a879897">
+				<flow-ref doc:name="storeError" doc:id="6043a32d-11d5-4fc6-a59c-6c29c136420b" name="storeErrorToObjectStore"/>
+				<amqp:reject doc:name="Reject" doc:id="ee36ee71-cd65-4a2e-a4a3-8cb6b704cba4" ackId="#[vars.ackId]"/>
+			</on-error-continue>
+		</error-handler>
+	
+</flow>
+	<sub-flow name="getCountryWeatherFromDB" doc:id="862b32ff-9330-4c8d-9b6f-07f80888d2f0" >
+		<ee:transform doc:name="Logger Message: Flow Start" doc:id="fb6a0b78-70ab-4986-b30c-8629276c408f">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="logMessage"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Get Country Weather request"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="auditLogging" doc:id="d3928517-f31a-47af-8867-2732d7d43b2f" name="auditLogging" />
+		<validation:is-not-blank-string doc:name="Is Country not Blank" doc:id="da8e2cba-e6a7-4bc0-9e13-7422c0b1172c" message="Country value can't be blank" value="#[attributes.queryParams.country]"/>
+		<http:request doc:name="Call a-mongodb-system-api /country-weather" doc:id="f9fcb6c8-669e-4835-bb69-deb2ab6f4cac" config-ref="HTTP_Domain_Request_config" path="${http.requester.mongodbAPI.basePath}/country-weather">
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"country" : attributes.queryParams.country
+}]]]></http:query-params>
+			<http:response-validator >
+				<http:success-status-code-validator values="200..599" />
+			</http:response-validator>
+		
+</http:request>
+		<flow-ref doc:name="responseValidating" doc:id="b5a8a069-22ac-40d7-9967-1e5ae44e4224" name="responseValidating" />
+	
+</sub-flow>
+	<flow name="saveDeadLetterToDB" doc:id="ac525991-1efa-4ae1-bdbb-77ae1c769cad" >
+		<amqp:listener doc:name="Listener DLQ" doc:id="082158f4-666a-4021-900d-654cf277508c" config-ref="RabbitMQ_CloudAMQP_Config" queueName="${rabbitMQ.deadLetterQueue}" ackMode="MANUAL">
+			<amqp:listener-quality-of-service-config prefetchCount="1" />
+			<amqp:response >
+				<amqp:properties contentType="application/json"/>
+			</amqp:response>
+		</amqp:listener>
+		<flow-ref doc:name="initialRequestLogging" doc:id="f4f9bb93-1143-4001-b1a2-fea6ef705f79" name="initialRequestLogging" />
+		<ee:transform doc:name="Logger Message: Flow Start" doc:id="a12b0fa1-5118-4b52-a0ee-8efbd81beb68">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="logMessage"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Consume message from DLQ and save error to DB"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="auditLogging" doc:id="bef68163-bad3-45dd-abb6-ee43655232a6" name="auditLogging" />
+		<set-variable value="#[attributes.ackId]" doc:name="ackId" doc:id="ae7a4601-6e22-4314-adb8-bc914a849ac8" variableName="ackId" />
+		<set-variable value="#[attributes.properties.messageId]" doc:name="messageId" doc:id="de862272-6bce-43cf-a27b-12c84c0217e9" variableName="messageId"/>
+		<os:retrieve doc:name="errorMessage" doc:id="f8e4ef8a-b9ee-4db0-aa3d-47d0fe546c9b" key="#[vars.messageId]" target="errorMessage">
+			<os:default-value ><![CDATA[UNKNOWN]]></os:default-value>
+		</os:retrieve>
+		<set-variable doc:name="retryCount" doc:id="711ff1bf-7313-4f9a-9cfb-4d7ff99e2d38" variableName="retryCount" value="#[attributes.headers.retryCount]"/>
+		<ee:transform doc:name="Choice Expression" doc:id="a68b6494-1f12-4a3e-b73a-caf74f0a29ab" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="choiceExpression" ><![CDATA[%dw 2.0
+output application/json
+var errorType = vars.errorMessage.errorInfo.errorType default "UNKNOWN"
+var retryCount = vars.retryCount default 0
+---
+(errorType contains "CONNECTIVITY") and (retryCount < 2)]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<try doc:name="Try" doc:id="4ffaf2e4-3ccd-461e-b0da-6c19f92f19a3" >
+			<ee:transform doc:name="Logger Message: Error Info" doc:id="3bbb3b89-3e35-4bb7-93ab-c831d4ecccd6">
+			<ee:message>
+			</ee:message>
+						<ee:variables>
+					<ee:set-variable variableName="logMessage" ><![CDATA[%dw 2.0
+output application/json
+
+var deathHeader = attributes.headers."x-death"[0]
+var deathProperties = attributes.properties
+var retryCount = attributes.headers.retryCount
+---
+{
+	metadata: {
+		retryCount: retryCount,
+        deathQueue: deathHeader.queue.stream,
+        deathExchange: deathHeader.exchange.stream,
+        deathReason: deathHeader.reason.stream,
+        correlationId: deathProperties.correlationId,
+        appName: deathProperties.appId
+	}
+}]]></ee:set-variable>
+						</ee:variables>
+		</ee:transform>
+			<flow-ref doc:name="auditLogging" doc:id="e6c90cd2-4f04-4bf8-84b2-bb869419380f" name="auditLogging"/>
+			<choice doc:name="Choice" doc:id="6831ab45-6642-40bf-9972-5bc3af82d78c">
+			<when expression="#[vars.choiceExpression]">
+				<ee:transform doc:name="routingKey" doc:id="8c3674ad-e5d0-4022-a469-da05cf5ba765">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="routingKey"><![CDATA[%dw 2.0
+output application/json
+import createRoutingKeyMapping from modules::RoutingKeyMappingLogic
+---
+createRoutingKeyMapping(payload.country, payload.capital.city,"restored")]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+				<amqp:publish doc:name="Publish" doc:id="6470b5e8-0099-4be9-a58f-165978bc547e" config-ref="RabbitMQ_CloudAMQP_Config" exchangeName="${rabbitMQ.exchange}" deliveryMode="PERSISTENT" createFallbackExchange="true" sendCorrelationId="NEVER">
+			<reconnect />
+			<amqp:fallback-exchange-definition removalStrategy="UNUSED" type="TOPIC" />
+			<amqp:routing-keys>
+				<amqp:routing-key value="#[vars.routingKey]" />
+			</amqp:routing-keys>
+			<amqp:message>
+				<amqp:properties contentType="application/json" timestamp="#[now()]" appId="#[app.name]" messageId="#[uuid()]"/>
+				<amqp:headers><![CDATA[#[{retryCount:vars.retryCount + 1}]]]></amqp:headers>
+			</amqp:message>
+		</amqp:publish>
+			</when>
+				<otherwise>
+					<ee:transform doc:name="Prepare for DB" doc:id="f7b6c3fa-7267-463b-92ad-5c9d1b92aa1a">
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var errorMessage = vars.errorMessage
+var deathHeader = attributes.headers."x-death"[0]
+var deathProperties = attributes.properties
+var retryCount = attributes.headers.retryCount
+---
+{
+	metadata: {
+		retryCount: retryCount,
+        deathQueue: deathHeader.queue.stream,
+        deathExchange: deathHeader.exchange.stream,
+        deathReason: deathHeader.reason.stream,
+        correlationId: deathProperties.correlationId,
+        appName: deathProperties.appId
+	},
+	errorMessage: errorMessage.errorInfo,
+	payload: payload
+}]]></ee:set-payload>
+						</ee:message>
+						<ee:variables>
+						</ee:variables>
+					</ee:transform>
+					<http:request doc:name="Call a-mongodb-system-api /dead-letter" doc:id="7d58d598-ae44-40c7-bab7-ade5f54258ea" config-ref="HTTP_Domain_Request_config" path="${http.requester.mongodbAPI.basePath}/dead-letter" method="POST">
+				</http:request>
+			</otherwise>
+		</choice>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="e0713f9f-6c41-4d65-b724-457d4c158fa5" >
+					<flow-ref doc:name="writeErrorToLocalFile" doc:id="cd6d7199-9fd6-4cdd-9b41-1bc2bca762b8" name="writeErrorToLocalFile" target="error"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<os:remove doc:name="Remove Error Message" doc:id="2aaf83e4-bb6b-4184-8114-4ed720f13144" key="#[vars.messageId]"/>
+		<flow-ref doc:name="finalLoggerMessage" doc:id="a4bd14f0-5c1d-434d-b316-82b04224fd34" name="finalLoggerMessage" />
+		<amqp:ack doc:name="Ack" doc:id="34ce639d-a2ac-4306-9a97-9d20ae22176a" ackId="#[vars.ackId]" />
+	</flow>
+	<sub-flow name="writeErrorToLocalFile" doc:id="730d9f0e-0917-4888-a969-6a243fab4e2b" >
+		<file:write doc:name="Write to Local File" doc:id="67d820ff-506c-4c8b-8039-11cc0e5e0ed6" config-ref="File_Config" path="deadLetter.log" mode="APPEND">
+			<file:content><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+	errorInfo: "Error was occurred during processing message from DLQ",
+	payload: payload	
+}]]]></file:content>
+		</file:write>
+		<flow-ref doc:name="errorMessageMapping" doc:id="114dc1b4-8be6-4428-b94f-09210d88a4d0" name="errorMessageMapping"/>
+	</sub-flow>
+	<sub-flow name="storeErrorToObjectStore" doc:id="b53c94e1-7e93-47c4-ab8b-b192e46ae6ab">
+		<flow-ref doc:name="errorMessageMapping" doc:id="00c2257b-ab37-4df8-833a-59a4fd2e4b68" name="errorMessageMapping" />
+		<set-variable value="#[attributes.properties.messageId]" doc:name="errorMessageKey" doc:id="14b6092b-273b-40a8-a7fd-f48995a3fce4" variableName="errorMessageKey" />
+		<os:store doc:name="Error Message" doc:id="26a60a6a-dc9c-432b-89ff-10cc5f6618cc" key="#[vars.errorMessageKey]">
+		</os:store>
+	
+</sub-flow>
+
+</mule>

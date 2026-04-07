@@ -1,0 +1,35 @@
+{
+	"country": "Ukraine",
+	"region": "Europe",
+	"subregion": "Eastern Europe",
+	"currencies": {
+		"UAH": {
+			"name": "Ukrainian hryvnia",
+			"symbol": "₴"
+		}
+	},
+	"languages": {
+		"ukr": "Ukrainian"
+	},
+	"population": 32862000,
+	"countryCode": "UA",
+	"timezone": 7200,
+	"capital": {
+		"city": "Kyiv",
+		"longitude": 30.5167,
+		"latitude": 50.4333,
+		"seaLevel": 1003,
+		"weatherConditions": {
+			"visibility": 66,
+			"temperature": {
+				"degrees": "Celsius",
+				"current": -0.03,
+				"max": -0.03,
+				"min": -0.03
+			}
+		},
+		"sunrise": 1769578726,
+		"sunset": 1769611360,
+		"weatherOn": "2026-02-19T12:45:32.123+02:00"
+	}
+}
