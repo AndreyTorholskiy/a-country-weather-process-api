@@ -16,4 +16,4 @@ rabbitMQ:
   deadLetterQueue: "country.city.dlq"
   
 log:
-  dir: "![aIU7YR+b/5wNP4kgLrf258t4CtMq/BGWIQy92rhidXFZG/6kxl0QEw43xeZPCx/jGFuyFn3ZuEY=]"
+  dir: "![vcJMBTa4dLDER1D2HZlItNt84INBS1rafykZXj/1YDkWidunoKkI7UuhwuBfYxIKSvPSuV7zPtF9BkfaQXzMMA==]"
