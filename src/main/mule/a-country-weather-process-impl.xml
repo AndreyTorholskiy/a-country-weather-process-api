@@ -147,13 +147,13 @@ output application/json
 		<flow-ref doc:name="auditLogging" doc:id="d50a22ad-c121-401e-8d45-daeb4758ebba" name="auditLogging" />
 		<set-variable value="#[attributes.ackId]" doc:name="ackId" doc:id="8583645e-bc0d-462e-88fe-b3633226e26e" variableName="ackId"/>
 		<set-variable value="#[payload.capital.city]" doc:name="city" doc:id="2804e972-1c25-4079-9da0-509c72ca27e1" variableName="city"/>
-		<!-- [STUDIO:"Call a-country-weather-system-api /weather"]<http:request doc:name="Call a-country-weather-system-api /weather" doc:id="d0fa02f5-b45d-4ff7-9b13-7ed56cb5545c" config-ref="HTTP_Domain_Request_config" path="${http.requester.countryWeatherAPI.basePath}/weather" target="weatherData">
+		<http:request doc:name="Call a-country-weather-system-api /weather" doc:id="d0fa02f5-b45d-4ff7-9b13-7ed56cb5545c" config-ref="HTTP_Domain_Request_config" path="${http.requester.countryWeatherAPI.basePath}/weather" target="weatherData">
 					<http:query-params><![CDATA[#[output application/java
-&#45;&#45;-
+---
 {
 	"city" : vars.city
-}&#93;&#93;&#93;></http:query-params>
-				</http:request> [STUDIO] -->
+}]]]></http:query-params>
+				</http:request>
 		<ee:transform doc:name="Prepare for DB" doc:id="f0962b74-e3a1-4f8e-a6c7-716da8197f51">
 					<ee:message>
 						<ee:set-payload><![CDATA[%dw 2.0
@@ -282,6 +282,7 @@ var retryCount = vars.retryCount default 0
 			</ee:variables>
 		</ee:transform>
 		<try doc:name="Try" doc:id="4ffaf2e4-3ccd-461e-b0da-6c19f92f19a3" >
+			<raise-error doc:name="Raise error" doc:id="3796e116-7a8b-4421-90d6-cc16c5268c00" type="SOME:ERROR"/>
 			<ee:transform doc:name="Logger Message: Error Info" doc:id="3bbb3b89-3e35-4bb7-93ab-c831d4ecccd6">
 			<ee:message>
 			</ee:message>
