@@ -10,18 +10,7 @@ http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mu
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
 http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
 	<sub-flow name="publishCountriesToSingleQueue" doc:id="1b84729c-c74f-4aba-a014-35256c50e796" >
-		<ee:transform doc:name="Logger Message: Flow Start" doc:id="d9b1cf73-95bc-4d97-a609-1ed43300f9da">
-			<ee:message />
-			<ee:variables>
-				<ee:set-variable variableName="logMessage"><![CDATA[%dw 2.0
-output application/json
----
-{
-	message: "Publish countries to exchange",
-	countryCount: sizeOf(payload default [])
-}]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
+		<set-variable value='#[{message: "Publish countries to exchange",countryCount: sizeOf(payload default [])}]' doc:name="logMessage - Flow Start" doc:id="33f6a356-cf33-482c-a87e-e941e0299467" variableName="logMessage"/>
 		<flow-ref doc:name="auditLogging" doc:id="8baa6e5c-c1e5-4cea-8953-a6496e84f649" name="auditLogging" />
 		<foreach doc:name="For Each" doc:id="4d64ecf5-8f66-4fd5-91e3-9cfa264ed665">
 			<ee:transform doc:name="Prepare for Exchange" doc:id="03e08dd4-586f-44e5-84c5-b7ca06ef09a3">
@@ -96,17 +85,7 @@ output application/json
 			</ee:transform>
 	</sub-flow>
 	<sub-flow name="processRandomCountriesPublish" doc:id="4bcee4bf-82dd-4def-9289-eef8eba1a697" >
-		<ee:transform doc:name="Logger Message: Flow Start" doc:id="2f99bf25-d337-457a-9335-210384548d8b">
-			<ee:message />
-			<ee:variables>
-				<ee:set-variable variableName="logMessage"><![CDATA[%dw 2.0
-output application/json
----
-{
-	message: "Process random three countries request"
-}]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
+		<set-variable value='#[{message: "Process random three countries request"}]' doc:name="logMessage - Flow Start" doc:id="9eab513d-ecd6-4220-9c6f-ec8382cb2e17" variableName="logMessage" />
 		<flow-ref doc:name="auditLogging" doc:id="ea62f923-7d32-4c1c-81ff-3ecb4b064218" name="auditLogging" />
 		<http:request doc:name="Call a-country-weather-system-api /country" doc:id="6bdda1a3-db72-4d36-a879-03577f7c36cb" config-ref="HTTP_Domain_Request_config" path="${http.requester.countryWeatherAPI.basePath}/country">
 		</http:request>
@@ -133,17 +112,7 @@ fun filterArray(countriesArray) = countriesArray filter !(removeCountries contai
 		
 </amqp:listener>
 		<flow-ref doc:name="initialRequestLogging" doc:id="6ca757be-7a5f-47a0-ad70-9ea6184a9319" name="initialRequestLogging" />
-		<ee:transform doc:name="Logger Message: Flow Start" doc:id="1c0edf40-da53-423b-93cc-2616e07f9151">
-			<ee:message />
-			<ee:variables>
-				<ee:set-variable variableName="logMessage"><![CDATA[%dw 2.0
-output application/json
----
-{
-	message: "Consume message from exchange and save to DB"
-}]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
+		<set-variable value='#[{message: "Consume message from exchange and save to DB"}]' doc:name="logMessage - Flow Start" doc:id="2babc988-e8bb-44ac-a604-ea87b52a2ffb" variableName="logMessage" />
 		<flow-ref doc:name="auditLogging" doc:id="d50a22ad-c121-401e-8d45-daeb4758ebba" name="auditLogging" />
 		<set-variable value="#[attributes.ackId]" doc:name="ackId" doc:id="8583645e-bc0d-462e-88fe-b3633226e26e" variableName="ackId"/>
 		<set-variable value="#[payload.capital.city]" doc:name="city" doc:id="2804e972-1c25-4079-9da0-509c72ca27e1" variableName="city"/>
@@ -193,18 +162,7 @@ var weatherData = vars.weatherData
 				</ee:transform>
 		<http:request doc:name="Call a-mongodb-system-api /country-weather" doc:id="02987e92-3c7a-42a9-99b6-db1e983d57bd" config-ref="HTTP_Domain_Request_config" method="POST" path="${http.requester.mongodbAPI.basePath}/country-weather">
 			</http:request>
-		<ee:transform doc:name="Logger Message: DB Response" doc:id="85df3bf4-c30a-4cf7-9b98-7d3bf5b5313c">
-			<ee:message />
-			<ee:variables>
-				<ee:set-variable variableName="logMessage"><![CDATA[%dw 2.0
-output application/json
----
-{
-    message: "Save to DB: DB response",
-    savedCountryWeather: payload.upsertedDocument.country
-}]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
+		<set-variable value='#[{message: "Save to DB: DB response",savedCountryWeather: payload.upsertedDocument.country}]' doc:name="logMessage - DB Response" doc:id="ee41dfbe-9b33-4d52-8ef0-869694e14017" variableName="logMessage"/>
 		<flow-ref doc:name="finalLoggerMessage" doc:id="fd32ff36-da55-4fd8-b0e0-80ee2d539984" name="finalLoggerMessage" />
 		<amqp:ack doc:name="Ack" doc:id="b6520a79-1718-4739-8996-dc8448cca485" ackId="#[vars.ackId]"/>
 		<error-handler >
@@ -216,17 +174,7 @@ output application/json
 	
 </flow>
 	<sub-flow name="getCountryWeatherFromDB" doc:id="862b32ff-9330-4c8d-9b6f-07f80888d2f0" >
-		<ee:transform doc:name="Logger Message: Flow Start" doc:id="fb6a0b78-70ab-4986-b30c-8629276c408f">
-			<ee:message />
-			<ee:variables>
-				<ee:set-variable variableName="logMessage"><![CDATA[%dw 2.0
-output application/json
----
-{
-	message: "Get Country Weather request"
-}]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
+		<set-variable value='#[{message: "Get Country Weather request"}]' doc:name="logMessage - Flow Start" doc:id="d71cdb34-3b73-48db-a0ab-bfa2fab0a0b2" variableName="logMessage" />
 		<flow-ref doc:name="auditLogging" doc:id="d3928517-f31a-47af-8867-2732d7d43b2f" name="auditLogging" />
 		<validation:is-not-blank-string doc:name="Is Country not Blank" doc:id="da8e2cba-e6a7-4bc0-9e13-7422c0b1172c" message="Country value can't be blank" value="#[attributes.queryParams.country]"/>
 		<http:request doc:name="Call a-mongodb-system-api /country-weather" doc:id="f9fcb6c8-669e-4835-bb69-deb2ab6f4cac" config-ref="HTTP_Domain_Request_config" path="${http.requester.mongodbAPI.basePath}/country-weather">
@@ -251,17 +199,7 @@ output application/json
 			</amqp:response>
 		</amqp:listener>
 		<flow-ref doc:name="initialRequestLogging" doc:id="f4f9bb93-1143-4001-b1a2-fea6ef705f79" name="initialRequestLogging" />
-		<ee:transform doc:name="Logger Message: Flow Start" doc:id="a12b0fa1-5118-4b52-a0ee-8efbd81beb68">
-			<ee:message />
-			<ee:variables>
-				<ee:set-variable variableName="logMessage"><![CDATA[%dw 2.0
-output application/json
----
-{
-	message: "Consume message from DLQ and save error to DB"
-}]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
+		<set-variable value='#[{message: "Consume message from DLQ and save error to DB"}]' doc:name="logMessage - Flow Start" doc:id="6133bce9-c034-4af5-9dd4-3510193bf27a" variableName="logMessage" />
 		<flow-ref doc:name="auditLogging" doc:id="bef68163-bad3-45dd-abb6-ee43655232a6" name="auditLogging" />
 		<set-variable value="#[attributes.ackId]" doc:name="ackId" doc:id="ae7a4601-6e22-4314-adb8-bc914a849ac8" variableName="ackId" />
 		<set-variable value="#[attributes.properties.messageId]" doc:name="messageId" doc:id="de862272-6bce-43cf-a27b-12c84c0217e9" variableName="messageId"/>
@@ -305,7 +243,6 @@ var retryCount = attributes.headers.retryCount
 }]]></ee:set-variable>
 						</ee:variables>
 		</ee:transform>
-			<flow-ref doc:name="auditLogging" doc:id="e6c90cd2-4f04-4bf8-84b2-bb869419380f" name="auditLogging"/>
 			<choice doc:name="Choice" doc:id="6831ab45-6642-40bf-9972-5bc3af82d78c">
 			<when expression="#[vars.choiceExpression]">
 				<ee:transform doc:name="routingKey" doc:id="8c3674ad-e5d0-4022-a469-da05cf5ba765">
